@@ -5,3 +5,4 @@ tensorflow==2.19.0
 keras==3.8.0
 python-multipart==0.0.9
 aiofiles==23.2.1
+opencv-python
