@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BMD Prediction App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- MUI + Emotion + React -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@mui/material@5/umd/material-ui.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@emotion/react@11/umd/emotion-react.umd.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@emotion/styled@11/umd/emotion-styled.umd.min.js" crossorigin></script>
+
+  <style>
+    body {
+      margin: 0;
+      background-color: #121212;
+    }
+    #root {
+      padding: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/javascript">
+    const { useState } = React;
+    const {
+      ThemeProvider,
+      createTheme,
+      CssBaseline,
+      Container,
+      Typography,
+      TextField,
+      Button,
+      CircularProgress,
+      Box,
+      Paper,
+      InputLabel
+    } = MaterialUI;
+
+    const darkTheme = createTheme({
+      palette: {
+        mode: 'dark',
+        primary: {
+          main: '#00bcd4',
+        },
+        background: {
+          default: '#121212',
+          paper: '#1e1e1e',
+        },
+      },
+      typography: {
+        fontFamily: 'Roboto, sans-serif',
+      },
+    });
+
+    function App() {
+      const [xray, setXray] = useState(null);
+      const [dexa, setDexa] = useState(null);
+      const [bmd, setBmd] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [result, setResult] = useState(null);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setResult(null);
+
+        const formData = new FormData();
+        if (xray) formData.append("xray", xray);
+        if (dexa) formData.append("dexa", dexa);
+        if (bmd) formData.append("bmd_report", bmd);
+
+        try {
+          const res = await fetch("/predict", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          setResult(data);
+        } catch (err) {
+          setResult({ error: "Failed to connect to backend." });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        React.createElement(ThemeProvider, { theme: darkTheme },
+          React.createElement(CssBaseline, null),
+          React.createElement(Container, { maxWidth: "md" },
+            React.createElement(Typography, {
+              variant: "h4",
+              align: "center",
+              color: "primary",
+              gutterBottom: true
+            }, "🩺 BMD Prediction & Report Generator"),
+
+            React.createElement("form", { onSubmit: handleSubmit },
+              React.createElement(Paper, { style: { padding: 24, marginBottom: 32 } },
+                React.createElement(InputLabel, { style: { marginTop: 16 } }, "X-ray Image"),
+                React.createElement("input", {
+                  type: "file",
+                  accept: "image/*",
+                  onChange: (e) => setXray(e.target.files[0])
+                }),
+
+                React.createElement(InputLabel, { style: { marginTop: 16 } }, "DEXA Scan"),
+                React.createElement("input", {
+                  type: "file",
+                  accept: "image/*",
+                  onChange: (e) => setDexa(e.target.files[0])
+                }),
+
+                React.createElement(InputLabel, { style: { marginTop: 16 } }, "BMD Report (PDF)"),
+                React.createElement("input", {
+                  type: "file",
+                  accept: "application/pdf",
+                  onChange: (e) => setBmd(e.target.files[0])
+                }),
+
+                React.createElement(Button, {
+                  type: "submit",
+                  variant: "contained",
+                  color: "primary",
+                  fullWidth: true,
+                  style: { marginTop: 24 }
+                }, "Analyze")
+              )
+            ),
+
+            loading && React.createElement(Box, { textAlign: "center", mt: 4 },
+              React.createElement(CircularProgress, { color: "primary" }),
+              React.createElement(Typography, { style: { marginTop: 16 }, color: "gray" }, "Analyzing medical data...")
+            ),
+
+            result && React.createElement(Paper, { style: { padding: 24, backgroundColor: "#1e1e1e" } },
+              React.createElement(Typography, { variant: "h6", color: "primary" }, "🧾 Analysis Result"),
+              Object.entries(result).map(([key, value]) =>
+                React.createElement(Box, { key, style: { marginTop: 16 } },
+                  React.createElement(Typography, { variant: "subtitle1", color: "secondary" }, key),
+                  React.createElement(Typography, { variant: "body2", style: { whiteSpace: "pre-line" } },
+                    typeof value === "object" ? JSON.stringify(value, null, 2) : value
+                  )
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+</body>
+</html>
