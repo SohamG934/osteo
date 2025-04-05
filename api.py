@@ -8,7 +8,6 @@ from typing import Optional
 from keras._tf_keras.keras.models import load_model
 import google.generativeai as genai
 import os
-import fitz  # PyMuPDF
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
